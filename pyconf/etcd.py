@@ -102,7 +102,7 @@ def _build_tuple(val):
         raise ValueError
 
 
-def info(etcd_url, service_names=None, conf_names=None, cache_key=None, force_refresh=False):
+def build(etcd_url, service_names=None, conf_names=None, cache_key=None, force_refresh=False):
     """
     给定服务键名和配置键名，获得所有的信息
     :param etcd_url: etcd服务器的地址。
@@ -144,5 +144,5 @@ if __name__ == '__main__':
 
     get_service(the_url, 'mongo-production', 'mongo')
     get_conf(the_url, 'yunkai-dev', 'yunkai')
-    info(the_url, [('redis-main', 'redis'), ('mongo-production', 'mongo'), 'nexus', 'fake'],
-         [('yunkai-dev', 'yunkai'), 'smscenter', 'fake'])
+    build(the_url, [('redis-main', 'redis'), ('mongo-production', 'mongo'), 'nexus', 'fake'],
+          [('yunkai-dev', 'yunkai'), 'smscenter', 'fake'])
