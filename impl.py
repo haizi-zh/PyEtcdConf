@@ -102,7 +102,7 @@ def _build_tuple(val):
         raise ValueError
 
 
-def build(etcd_url, service_names=None, conf_names=None, cache_key=None, force_refresh=False):
+def build(etcd_url, service_names=None, conf_names=None, cache_key='default', force_refresh=False):
     """
     给定服务键名和配置键名，获得所有的信息
     :param etcd_url: etcd服务器的地址。
