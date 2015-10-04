@@ -8,7 +8,7 @@ __author__ = 'zephyre'
 _cached_result = {}
 
 
-def get_service(etcd_url, service_name, alias):
+def get_service(etcd_url, etcd_auth, service_name, alias):
     """
     获得服务的入口信息（host:port）
 
@@ -45,13 +45,13 @@ def get_service(etcd_url, service_name, alias):
         return key, {'host': host, 'port': port}
 
     try:
-        nodes = requests.get(url).json()['node']['nodes']
+        nodes = requests.get(url, auth=etcd_auth).json()['node']['nodes']
         return {alias: dict(map(get_service_entry, nodes))}
     except (KeyError, IndexError, ValueError):
         return None
 
 
-def get_conf(etcd_url, conf_name, alias):
+def get_conf(etcd_url, etcd_auth, conf_name, alias):
     """
     从etcd数据库获得配置信息
 
@@ -81,7 +81,7 @@ def get_conf(etcd_url, conf_name, alias):
             return None
 
     url = '%s/v2/keys/project-conf/%s?recursive=true' % (etcd_url, conf_name)
-    data = requests.get(url).json()
+    data = requests.get(url, auth=etcd_auth).json()
     if 'node' not in data:
         return None
     else:
@@ -102,10 +102,11 @@ def _build_tuple(val):
         raise ValueError
 
 
-def build(etcd_url, service_names=None, conf_names=None, cache_key='default', force_refresh=False):
+def build(etcd_url, etcd_auth=None, service_names=None, conf_names=None, cache_key='default', force_refresh=False):
     """
     给定服务键名和配置键名，获得所有的信息
-    :param etcd_url: etcd服务器的地址。
+    :param etcd_url: etcd服务的地址。
+    :param etcd_auth: etcd服务的HTTPBasicAuth
     :param service_names: 服务列表。具有两种形式。1. 指定键名：[ "rabbitmq", "mongodb" ]。
     2. 指定键名和别名：[ ("rabbitmq-node1", "rabbitmq"), ("mongodb-master", "mongodb") ]。这两种形式可以混合使用。
     :param conf_names: 配置信息列表。和服务列表类似，也具有具有别名和不具有别名这两种形式。
@@ -126,9 +127,10 @@ def build(etcd_url, service_names=None, conf_names=None, cache_key='default', fo
             result_map.update(dictionary)
         return result_map
 
-    services = merge_dicts(
-        *filter(lambda v: v, [get_service(etcd_url, *_build_tuple(entry)) for entry in (service_names or [])]))
-    conf = merge_dicts(*filter(lambda v: v, [get_conf(etcd_url, *_build_tuple(entry)) for entry in (conf_names or [])]))
+    services = merge_dicts(*filter(lambda v: v, [get_service(etcd_url, etcd_auth, *_build_tuple(entry)) for entry in
+                                                 (service_names or [])]))
+    conf = merge_dicts(
+        *filter(lambda v: v, [get_conf(etcd_url, etcd_auth, *_build_tuple(entry)) for entry in (conf_names or [])]))
     result = merge_dicts({'services': services}, conf)
 
     if cache_key:
